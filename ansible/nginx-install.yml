@@ -1,0 +1,73 @@
+---
+- name: Instalar y configurar NGINX Open Source en el nodo LB
+  hosts: lb
+  become: yes
+
+  tasks:
+    - name: Eliminar cualquier referencia al repositorio noble de nginx
+      shell: rm -f /etc/apt/sources.list.d/nginx.list
+      ignore_errors: yes
+
+    - name: Eliminar preferencias de nginx (si existen)
+      shell: rm -f /etc/apt/preferences.d/99nginx
+      ignore_errors: yes
+
+    - name: Instalar dependencias necesarias
+      apt:
+        name:
+          - curl
+          - gnupg2
+          - ca-certificates
+          - lsb-release
+          - ubuntu-keyring
+        state: present
+        update_cache: yes
+
+    - name: Descargar y registrar clave GPG de NGINX
+      shell: |
+        curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor | sudo tee /usr/share/keyrings/nginx-archive-keyring.gpg > /dev/null
+      args:
+        executable: /bin/bash
+
+    - name: Verificar huella de la clave GPG
+      shell: |
+        gpg --dry-run --quiet --import --import-options import-show /usr/share/keyrings/nginx-archive-keyring.gpg | grep "573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62"
+      register: gpg_check
+      failed_when: gpg_check.rc != 0
+      changed_when: false
+
+    - name: Crear archivo del repositorio oficial de NGINX (jammy, for Ubuntu 24.04)
+      copy:
+        dest: /etc/apt/sources.list.d/nginx.list
+        content: |
+          deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/ubuntu jammy nginx
+          deb-src [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/ubuntu jammy nginx
+
+    - name: Establecer prioridad de paquetes desde nginx.org
+      copy:
+        dest: /etc/apt/preferences.d/99nginx
+        content: |
+          Package: *
+          Pin: origin nginx.org
+          Pin-Priority: 900
+
+    - name: Actualizar caché de APT
+      apt:
+        update_cache: yes
+
+    - name: Instalar NGINX
+      apt:
+        name: nginx
+        state: present
+
+    - name: Copiar configuración personalizada de NGINX (nginx.conf)
+      copy:
+        src: files/nginx.conf
+        dest: /etc/nginx/nginx.conf
+        backup: yes
+
+    - name: Reiniciar y habilitar NGINX
+      service:
+        name: nginx
+        state: restarted
+        enabled: yes
