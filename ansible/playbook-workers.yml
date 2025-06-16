@@ -1,0 +1,5 @@
+- name: Configurar nodo worker RKE2
+  hosts: workers
+  become: true
+  roles:
+    - rke2_workers

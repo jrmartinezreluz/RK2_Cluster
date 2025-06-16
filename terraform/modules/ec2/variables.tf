@@ -2,10 +2,17 @@ variable "ami_id" {
   type = string
 }
 
-variable "instance_type" {
+variable "instance_master" {
   type = string
 }
 
+variable "instance_workers" {
+  type = string
+}
+
+variable "instance_micro" {
+  type = string
+}
 variable "key_name" {
   type = string
 }

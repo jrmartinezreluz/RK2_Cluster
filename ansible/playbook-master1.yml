@@ -1,0 +1,5 @@
+- name: Configurar nodo master RKE2
+  hosts: master1
+  become: true
+  roles:
+    - rke2_master1

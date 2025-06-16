@@ -1,0 +1,28 @@
+# NO INCLUIR server: en el nodo master1 inicial
+
+# TLS SANs válidos para el certificado del API server
+tls-san:
+  - master1                         # Nombre DNS interno o en /etc/hosts
+  - 10.0.1.180                      # IP del Load Balancer (privada)
+  - rancher.genialholdinggroup.com
+  - argocd.genialholdinggroup.com
+
+# Rango de red para pods y servicios
+cluster-cidr: 192.168.0.0/16
+service-cidr: 10.43.0.0/16
+
+# CNI: Calico
+cni: calico
+
+# Taints para evitar que workloads se asignen a los master nodes
+node-taint:
+  - "CriticalAddonsOnly=true:NoExecute"
+
+# kube-proxy en modo IPVS y round robin
+kube-proxy-arg:
+  - --proxy-mode=ipvs
+  - --ipvs-scheduler=rr
+
+# Auditoría del API server
+kube-apiserver-arg:
+  - --audit-policy-file=/etc/rancher/rke2/audit-policy.yaml

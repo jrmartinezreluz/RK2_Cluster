@@ -36,7 +36,7 @@
       failed_when: gpg_check.rc != 0
       changed_when: false
 
-    - name: Crear archivo del repositorio oficial de NGINX (jammy, for Ubuntu 24.04)
+    - name: Crear archivo del repositorio oficial de NGINX (jammy, para Ubuntu 24.04)
       copy:
         dest: /etc/apt/sources.list.d/nginx.list
         content: |
@@ -65,6 +65,29 @@
         src: files/nginx.conf
         dest: /etc/nginx/nginx.conf
         backup: yes
+
+    - name: Crear carpeta de certificados SSL para NGINX
+      file:
+        path: /etc/nginx/ssl
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Generar clave privada si no existe
+      command: openssl genrsa -out /etc/nginx/ssl/privkey.pem 2048
+      args:
+        creates: /etc/nginx/ssl/privkey.pem
+
+    - name: Generar certificado autofirmado si no existe
+      command: >
+        openssl req -x509 -nodes -days 365
+        -subj "/C=DO/ST=SantoDomingo/L=DistritoNacional/O=GenialHolding/CN=rancher.genialholdinggroup.com"
+        -newkey rsa:2048
+        -keyout /etc/nginx/ssl/privkey.pem
+        -out /etc/nginx/ssl/fullchain.pem
+      args:
+        creates: /etc/nginx/ssl/fullchain.pem
 
     - name: Reiniciar y habilitar NGINX
       service:

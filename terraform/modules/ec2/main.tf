@@ -51,27 +51,33 @@ resource "aws_security_group" "rke2_sg" {
   }
 }
 
-# Lista de instancias
 locals {
   instances = [
-    { name = "lb",        type = "t3.micro"  },
-    { name = "master1",   type = var.instance_type },
-    { name = "master2",   type = var.instance_type },
-    { name = "master3",   type = var.instance_type },
-    { name = "worker1",   type = var.instance_type },
-    { name = "worker2",   type = var.instance_type },
+    { name = "lb",        type = var.instance_micro },
+    { name = "master1",   type = var.instance_master },
+    { name = "master2",   type = var.instance_master },
+    { name = "master3",   type = var.instance_master },
+    { name = "worker1",   type = var.instance_workers },
+    { name = "worker2",   type = var.instance_workers },
+    { name = "rundeck",   type = var.instance_micro }
   ]
 }
 
 resource "aws_instance" "nodes" {
   for_each = { for inst in local.instances : inst.name => inst }
 
-  ami                    = var.ami_id
-  instance_type          = each.value.type
-  subnet_id              = var.subnet_id
-  key_name               = var.key_name
-  vpc_security_group_ids = [aws_security_group.rke2_sg.id]
+  ami                         = var.ami_id
+  instance_type               = each.value.type
+  subnet_id                   = var.subnet_id
+  key_name                    = var.key_name
+  vpc_security_group_ids      = [aws_security_group.rke2_sg.id]
   associate_public_ip_address = true
+
+  root_block_device {
+    volume_size           = 150
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
 
   tags = {
     Name = each.key
