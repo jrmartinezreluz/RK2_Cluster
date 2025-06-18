@@ -88,7 +88,7 @@ curl http://<IP_LB>:9080
 curl http://<IP_LB>:9081
 
 📬 Contacto
-José Rogelio Martínez
-Cloud Architect & IT Infrastructure Specialist
-📞 +507 6363-6738
-✉️ jrmartinezreluz@gmail.com
+We would love to hear from you:
+📧 jmartinez@arkhadia.net
+📱 +507 6363-6738
+🌐 @genialcorpholding
