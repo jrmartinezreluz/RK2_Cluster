@@ -129,5 +129,3 @@ We’d love to hear from you:
 🌐 @genialcorpholding
 
 ---
-
-¿Deseas que también genere un `README.md` en archivo o agregar un badge de estado del proyecto?
