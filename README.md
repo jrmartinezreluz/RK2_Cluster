@@ -1,94 +1,135 @@
-# Proyecto: Clúster Kubernetes RKE2 en AWS con Argo CD, NGINX y Node.js Apps
+Aquí tienes la **traducción al inglés** y el **formato mejorado** del `README.md`, manteniendo un estilo profesional, claro y bien estructurado:
 
-Este proyecto implementa un clúster de Kubernetes basado en **RKE2** sobre instancias EC2 en **AWS**, utilizando Terraform para la infraestructura, Ansible para la configuración del balanceador NGINX y Argo CD para el despliegue GitOps de aplicaciones Node.js.
+---
 
-## 📦 Arquitectura del Proyecto
+# Project: RKE2 Kubernetes Cluster on AWS with Argo CD, NGINX, and Node.js Apps
 
-+-------------------+ +----------------------+ +---------------------+
-| Usuario (web) | <---> | NGINX (LB - EC2) | <---> | Kubernetes RKE2 |
-| | | IP Pública: x.x.x.x | | (3 masters + 2 workers)|
-+-------------------+ +----------------------+ +---------------------+
-|
-|--> Puerto 9080 -> App Node.js 1
-|--> Puerto 9081 -> App Node.js 2
-|--> Puerto 9443 -> Argo CD (UI)
+This project sets up a **Kubernetes cluster based on RKE2** running on **AWS EC2 instances**, using **Terraform** for infrastructure provisioning, **Ansible** for NGINX load balancer configuration, and **Argo CD** for GitOps-based deployment of Node.js applications.
 
+---
 
-## ☁️ Infraestructura AWS
+## 📦 Project Architecture
 
-- VPC con subred pública y privada
-- 6 Instancias EC2 (Ubuntu 24.04 LTS):
-  - 1 LB: NGINX como balanceador TCP
-  - 3 Masters: RKE2 server
-  - 2 Workers: RKE2 agent
-- Security Groups configurados para habilitar puertos 22, 6443, 9345, 9080, 9081 y 9443
+```
++-------------------+     +----------------------+     +---------------------+
+|     User (web)    | <-> |  NGINX (LB - EC2)    | <-> |   RKE2 Kubernetes   |
+|                   |     |  Public IP: x.x.x.x  |     | (3 masters, 2 workers) |
++-------------------+     +----------------------+     +---------------------+
+                             |       |       |
+                             |       |       +--> Port 9080 -> Node.js App 1  
+                             |       +----------> Port 9081 -> Node.js App 2  
+                             +---------------> Port 9443 -> Argo CD (UI)
+```
 
-## ⚙️ Herramientas Utilizadas
+---
 
-- [Terraform](https://www.terraform.io/) – Infraestructura como código
-- [Ansible](https://www.ansible.com/) – Configuración de NGINX
-- [RKE2](https://docs.rke2.io/) – Kubernetes empresarial de Rancher
-- [Argo CD](https://argo-cd.readthedocs.io/) – GitOps para Kubernetes
-- [NGINX](https://nginx.org/) – Balanceador de carga TCP/HTTP
-- [DockerHub](https://hub.docker.com/) – Almacenamiento de imágenes
+## ☁️ AWS Infrastructure
 
-## 🚀 Aplicaciones Desplegadas
+* VPC with public and private subnets
+* 6 EC2 Instances (Ubuntu 24.04 LTS):
+
+  * 1 Load Balancer: NGINX in TCP mode
+  * 3 Masters: RKE2 server nodes
+  * 2 Workers: RKE2 agent nodes
+* Security Groups allow access on ports: 22, 6443, 9345, 9080, 9081, and 9443
+
+---
+
+## ⚙️ Tools Used
+
+* [Terraform](https://www.terraform.io/) – Infrastructure as Code
+* [Ansible](https://www.ansible.com/) – NGINX Configuration Automation
+* [RKE2](https://docs.rke2.io/) – Rancher's enterprise Kubernetes distribution
+* [Argo CD](https://argo-cd.readthedocs.io/) – GitOps deployment for Kubernetes
+* [NGINX](https://nginx.org/) – TCP/HTTP Load Balancer
+* [DockerHub](https://hub.docker.com/) – Image registry
+
+---
+
+## 🚀 Deployed Applications
 
 ### Node.js App 1
 
-- Desplegada vía Argo CD
-- Acceso: `http://<IP_LB>:9080`
-- Imagen: `jrmartinezreluz/nodejs-app:latest`
+* Deployed via Argo CD
+* Access: `http://<LB_IP>:9080`
+* Image: `jrmartinezreluz/nodejs-app:latest`
 
 ### Node.js App 2
 
-- Desplegada vía Argo CD
-- Acceso: `http://<IP_LB>:9081`
-- Imagen: `jrmartinezreluz/nodejs-app2:latest`
+* Deployed via Argo CD
+* Access: `http://<LB_IP>:9081`
+* Image: `jrmartinezreluz/nodejs-app2:latest`
 
-## 🧩 Estructura del Repositorio
+---
 
+## 🧩 Repository Structure
+
+```
 rke2/
-├── ansible/ # Configuración automática de NGINX
-├── apps/ # Manifiestos declarativos de Argo CD
-│ ├── nodejs-app.yaml
-│ └── nodejs-app2.yaml
-├── docker/ # Archivos Docker de las apps
-│ ├── nodejs-app/
-│ │ ├── Dockerfile
-│ │ ├── index.js
-│ │ └── package.json
-│ └── nodejs-app2/
-│ ├── Dockerfile
-│ ├── index.js
-│ └── package.json
-├── terraform/ # Infraestructura en AWS
-│ ├── main.tf
-│ └── variables.tf
+├── ansible/              # NGINX configuration automation
+├── apps/                 # Argo CD declarative manifests
+│   ├── nodejs-app.yaml
+│   └── nodejs-app2.yaml
+├── docker/               # Dockerfiles for the apps
+│   ├── nodejs-app/
+│   │   ├── Dockerfile
+│   │   ├── index.js
+│   │   └── package.json
+│   └── nodejs-app2/
+│       ├── Dockerfile
+│       ├── index.js
+│       └── package.json
+├── terraform/            # AWS infrastructure code
+│   ├── main.tf
+│   └── variables.tf
 └── README.md
+```
 
-## 🔐 Acceso a Argo CD
+---
 
-- URL: `https://<IP_LB>:9443`
-- Usuario: `admin`
-- Contraseña: obtenida desde:
+## 🔐 Argo CD Access
+
+* URL: `https://<LB_IP>:9443`
+* Username: `admin`
+* Password: retrieve using:
+
   ```bash
   kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-  
-📦 Deploy GitOps
-Argo CD detecta cambios en los manifiestos YAML ubicados en apps/ y los sincroniza automáticamente con el clúster.
+  ```
 
-🧪 Validación
-Desde el LB puedes validar los servicios:
-curl http://localhost:9080     # Node.js App 1
-curl http://localhost:9081     # Node.js App 2
+---
 
-O desde fuera del entorno:
-curl http://<IP_LB>:9080
-curl http://<IP_LB>:9081
+## 📦 GitOps Deployment
 
-📬 Contacto
-We would love to hear from you:
-📧 jmartinez@arkhadia.net
+Argo CD continuously monitors the YAML manifests in the `apps/` folder and keeps the cluster in sync with the defined state.
+
+---
+
+## 🧪 Validation
+
+From the Load Balancer (locally):
+
+```bash
+curl http://localhost:9080   # Node.js App 1  
+curl http://localhost:9081   # Node.js App 2
+```
+
+From outside the environment:
+
+```bash
+curl http://<LB_IP>:9080  
+curl http://<LB_IP>:9081
+```
+
+---
+
+## 📬 Contact
+
+We’d love to hear from you:
+📧 [jmartinez@arkhadia.net](mailto:jmartinez@arkhadia.net)
 📱 +507 6363-6738
 🌐 @genialcorpholding
+
+---
+
+¿Deseas que también genere un `README.md` en archivo o agregar un badge de estado del proyecto?
