@@ -1,5 +1,3 @@
-Aquí tienes la **traducción al inglés** y el **formato mejorado** del `README.md`, manteniendo un estilo profesional, claro y bien estructurado:
-
 ---
 
 # Project: RKE2 Kubernetes Cluster on AWS with Argo CD, NGINX, and Node.js Apps
