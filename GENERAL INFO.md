@@ -1,87 +1,158 @@
-# Manual Configuration Steps – RKE2 Cluster
+---
 
-This document outlines the manual steps taken to configure master and worker nodes, the NGINX load balancer, and Argo CD.
+# 🛠️ Manual Configuration – RKE2 Cluster on AWS
 
-## 🔹 Master Nodes
+This guide describes the manual steps to configure:
 
-### Prerequisites (on each master)
+* Master and Worker nodes for the RKE2 Kubernetes cluster
+* NGINX as a TCP load balancer
+* Argo CD for GitOps-based application deployment
+
+---
+
+## 🔹 Master Nodes Setup
+
+### 🔧 Prerequisites (on each master node)
+
 ```bash
 sudo hostnamectl set-hostname masterX
 sudo apt update && sudo apt upgrade -y
 ```
 
-### Install RKE2 Server (master1)
+### 📥 Install RKE2 Server (master1)
+
 ```bash
 curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_TYPE="server" sh -
 sudo mkdir -p /etc/rancher/rke2
+```
 
-# config.yaml
+Create `/etc/rancher/rke2/config.yaml` with:
+
+```yaml
 token: <SHARED_TOKEN>
 tls-san:
   - <PUBLIC_LB_IP>
+```
 
+Start the service:
+
+```bash
 sudo systemctl enable rke2-server
 sudo systemctl start rke2-server
 ```
 
-### Retrieve token (master1)
+### 🔐 Retrieve Cluster Token (master1)
+
 ```bash
 sudo cat /var/lib/rancher/rke2/server/node-token
 ```
 
-### Setup master2 & master3
-Same as master1, but with `server: https://<PRIVATE_LB_IP>:9345` in config.yaml
+### 🧩 Configure master2 and master3
 
-## 🔹 Worker Nodes
+Same steps as `master1`, but modify the `config.yaml` with:
 
-### Preparation & Installation
+```yaml
+server: https://<PRIVATE_LB_IP>:9345
+token: <SHARED_TOKEN>
+tls-san:
+  - <PUBLIC_LB_IP>
+```
+
+---
+
+## 🔹 Worker Nodes Setup
+
+### ⚙️ Preparation and RKE2 Agent Installation
+
 ```bash
 sudo hostnamectl set-hostname workerX
 sudo apt update && sudo apt upgrade -y
 curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_TYPE="agent" sh -
+```
 
-# config.yaml
+Create `/etc/rancher/rke2/config.yaml` with:
+
+```yaml
 server: https://<PRIVATE_LB_IP>:9345
 token: <TOKEN_FROM_MASTER1>
+```
 
+Start the agent service:
+
+```bash
 sudo systemctl enable rke2-agent
 sudo systemctl start rke2-agent
 ```
 
+---
+
 ## 🔹 NGINX Load Balancer
 
-Installed using Ansible playbook:
+NGINX is installed using an Ansible playbook:
+
 ```bash
 ansible-playbook -i inventory.ini nginx-install.yml
 ```
 
-## 🔹 Argo CD
+Configured to load balance TCP traffic on ports:
+
+* `9345` for RKE2 cluster join
+* `6443` for Kubernetes API
+* `9080`, `9081` for Node.js apps
+* `9443` for Argo CD
+
+---
+
+## 🔹 Argo CD Installation
 
 ```bash
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
 
+Retrieve the admin password:
+
+```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ```
 
-Web access via: `https://<LB_IP>:9443`
+Access Argo CD Web UI:
+`https://<LB_IP>:9443`
+
+---
 
 ## 🔹 Argo CD Applications
 
-Declared via Git:
-- `apps/nodejs-app.yaml`
-- `apps/nodejs-app2.yaml`
+Applications declared in Git and synced via Argo CD:
+
+* `apps/nodejs-app.yaml`
+* `apps/nodejs-app2.yaml`
+
+Each app exposes a Node.js service:
+
+* App 1: `http://<LB_IP>:9080`
+* App 2: `http://<LB_IP>:9081`
+
+---
 
 ## ✅ Final Test
+
+Verify both applications:
+
 ```bash
-curl http://localhost:9080
-curl http://localhost:9081
+curl http://localhost:9080   # Node.js App 1
+curl http://localhost:9081   # Node.js App 2
 ```
 
-Both should return Node.js welcome messages.
+Both should return a welcome message from the respective Node.js apps.
 
-📬 Contact
-We’d love to hear from you:
-📧 jmartinez@arkhadia.net
-📱 +507 6363-6738
-🌐 @genialcorpholding
+---
+
+## 📬 Contact
+
+For questions, suggestions, or support:
+📧 **[jmartinez@arkhadia.net](mailto:jmartinez@arkhadia.net)**
+📱 **+507 6363-6738**
+🌐 **@genialcorpholding**
+
+---
