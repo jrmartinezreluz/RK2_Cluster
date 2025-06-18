@@ -245,7 +245,5 @@ For support or questions:
 📱 **+507 6363-6738**
 🌐 **@genialcorpholding**
 
-```
-
 ---
 
